@@ -1,6 +1,6 @@
 # config.py - Lab constants and policy values
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-5-5"
 MAX_REFUND_AMOUNT = 500
 MAX_LOOP_ITERATIONS = 10
 ESCALATION_REASONS = ["fraud", "policy_gap", "customer_request", "repeated_failure"]

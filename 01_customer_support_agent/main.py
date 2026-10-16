@@ -35,6 +35,7 @@ def load_system_prompt():
 
 def check_prerequisite(tool_name, tool_history):
     """Block process_refund unless get_customer has already been called successfully."""
+    
     # TODO: Check if tool_name is "process_refund" and if "get_customer" is NOT
     # in tool_history. If the prerequisite is missing, return a dict with:
     #   error: True
@@ -42,6 +43,16 @@ def check_prerequisite(tool_name, tool_history):
     #   isRetryable: True
     #   message: explaining that customer identity must be verified first
     # Otherwise return None to allow the tool call.
+
+    if tool_name == "process_refund" and "get_customer" not in tool_history:
+        return {
+            "error": True,
+            "errorCategory": "validation",
+            "isRetryable": True,
+            "message": "Customer identity must be verified via get_customer before processing a refund.",
+        }
+        return result
+
     return None
 
 
