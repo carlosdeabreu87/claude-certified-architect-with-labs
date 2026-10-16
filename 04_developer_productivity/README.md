@@ -44,12 +44,11 @@ Before writing any code, orient yourself:
 
 3. **Glance at `.claude/commands/explore.md`** — this is a Claude Code skill you will complete in Step 7.
 
-### Step 1 — Create a Python virtual environment
+### Step 1 — Create a conda environment
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # macOS/Linux
-.venv\Scripts\activate      # Windows
+conda create -n cca-04 python=3.11
+conda activate cca-04
 ```
 
 ### Step 2 — Configure

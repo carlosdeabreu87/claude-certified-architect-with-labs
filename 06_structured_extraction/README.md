@@ -31,12 +31,11 @@ Open the **`06_structured_extraction/`** folder in VSCode.
 Launch Claude Code from the terminal inside this folder.
 This ensures Claude Code loads the lab's own `CLAUDE.md`.
 
-### Step 1 — Create a Python virtual environment
+### Step 1 — Create a conda environment
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # macOS/Linux
-.venv\Scripts\activate      # Windows
+conda create -n cca-06 python=3.11
+conda activate cca-06
 ```
 
 ### Step 2 — Configure

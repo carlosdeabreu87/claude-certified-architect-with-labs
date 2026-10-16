@@ -21,24 +21,26 @@ Build working code for each of the 6 exam scenarios so you can apply the concept
 
 ### Prerequisites
 
-- Python 3.11+
+- [conda](https://docs.conda.io/en/latest/miniconda.html) (Miniconda or Anaconda)
 - An [Anthropic API key](https://console.anthropic.com/)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (required for Labs 02 and 05)
 
 ### Setup
 
+Each lab gets its own conda environment.
+
 ```bash
 cd 0X_lab_name
-python -m venv .venv
-
-source .venv/bin/activate   # macOS/Linux
-.venv\Scripts\activate      # Windows
+conda create -n cca-0X python=3.11
+conda activate cca-0X
 
 cp .env.example .env        # add your ANTHROPIC_API_KEY
 pip install -r requirements.txt
 
 python main.py              # run the lab
 ```
+
+Replace `0X` with the lab number (e.g. `cca-01` for `01_customer_support_agent`). To remove an environment later: `conda deactivate && conda env remove -n cca-0X`.
 
 ---
 
