@@ -1,6 +1,6 @@
 # config.py - Lab constants
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-5-5"
 
 # Console colors
 CYAN = "\033[96m"

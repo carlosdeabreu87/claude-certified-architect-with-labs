@@ -1,3 +1,5 @@
+@import coding_standards.md
+
 # Lab 02 — Code Generation with Claude Code
 
 ## Coding conventions
