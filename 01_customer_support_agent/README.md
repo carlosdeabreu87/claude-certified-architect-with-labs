@@ -33,15 +33,16 @@ Build a customer support agent with four MCP-style tools, an agentic loop driven
 
 ### Step 0 — Open the lab folder
 
-Open the **`01_customer_support_agent/`** folder in VSCode.
+Open the `**01_customer_support_agent/**` folder in VSCode.
 Launch Claude Code from the terminal inside this folder.
 This ensures Claude Code loads the lab's own `CLAUDE.md`.
 
-### Step 1 — Create a conda environment
+### Step 1 — Create a Python virtual environment
 
 ```bash
-conda create -n cca-01 python=3.11
-conda activate cca-01
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate      # Windows
 ```
 
 ### Step 2 — Configure
@@ -62,9 +63,9 @@ pip install -r requirements.txt
 
 Before running, open these files to understand the starter design:
 
-- **`tools.py`** — four tool functions (`get_customer`, `lookup_order`, `process_refund`, `escalate_to_human`), each paired with a companion `_schema` dict. The schema is what Claude sees; the function is what executes when Claude calls it.
-- **`main.py`** — find the `while` loop. It checks `stop_reason == "tool_use"` to continue and `"end_turn"` to stop. This is the agentic loop you will observe in action.
-- **`system_prompt.txt`** — the system prompt with escalation criteria and a `{case_facts}` template variable (currently empty — you will populate it in Step 7).
+- `**tools.py**` — four tool functions (`get_customer`, `lookup_order`, `process_refund`, `escalate_to_human`), each paired with a companion `_schema` dict. The schema is what Claude sees; the function is what executes when Claude calls it.
+- `**main.py**` — find the `while` loop. It checks `stop_reason == "tool_use"` to continue and `"end_turn"` to stop. This is the agentic loop you will observe in action.
+- `**system_prompt.txt**` — the system prompt with escalation criteria and a `{case_facts}` template variable (currently empty — you will populate it in Step 7).
 
 #### 3.2 Run
 
@@ -77,6 +78,7 @@ The agent starts with a menu of numbered test queries covering key lab scenarios
 Type `1` to run the first test query (an order status check for Maria Santos).
 
 **What to observe:**
+
 - The agent calls `get_customer` first, then `lookup_order` — each tool call is a separate iteration of the agentic loop
 - Each iteration prints `stop_reason: tool_use` — this tells the loop to execute the tool and continue
 - After all tool calls are done, `stop_reason: end_turn` appears — this tells the loop to stop and print the final response
@@ -132,6 +134,7 @@ Programmatic enforcement (hooks, prerequisite gates) vs prompt-based guidance. W
 Type `5` to test a message where Maria Santos asks about two issues at once: a damaged-item refund AND a delivery status check on a different order.
 
 **What to observe:**
+
 - The agent should investigate both issues — not abandon one to focus on the other
 - It calls `get_customer` once, then uses the shared customer context to handle both `lookup_order` calls and the refund
 - The final response synthesizes both answers into a unified reply
@@ -267,6 +270,7 @@ After Claude Code makes the changes, re-run with query `2` (Maria Santos refund)
 Persistent fact extraction — amounts, dates, order numbers — into a structured block outside summarized history prevents loss during progressive summarization. Tool results accumulate tokens disproportionately to their relevance; `case_facts` extracts only the fields that matter. The system prompt uses an XML-tagged section with a template variable — no string manipulation. [Task 5.1]
 
 > **Also know for the exam:** Two related context management concepts:
+>
 > - **"Lost in the middle" effect:** Models reliably process information at the beginning and end of long inputs but may miss findings buried in the middle. Place key findings at the beginning of aggregated inputs and use section headers to mitigate this. The `<case_facts>` block at the top of the system prompt is an example of this placement strategy.
 > - **Trimming tool outputs:** In this lab, full tool results are appended to conversation history. In production, you would trim verbose tool outputs to only the relevant fields *before* appending — e.g., keeping only return-relevant fields from a 40-field order lookup. This reduces token accumulation without losing the information that matters.
 >
@@ -291,7 +295,8 @@ Before finishing, review how the tools are designed in `tools.py`:
 
 **Access failures vs valid empty results (Task 2.2):** This lab's tools return errors for not-found cases (`"errorCategory": "validation"`). The exam also tests the distinction between an *access failure* (timeout, service down — needs a retry decision) and a *valid empty result* (query succeeded, no matches — not an error). A search tool returning `{"results": []}` is a success; a search tool timing out is a failure. They require different recovery paths.
 
-**`tool_choice` configuration (Task 2.3):** This lab uses the default `tool_choice: "auto"` — the model decides which tool to call. The exam also tests:
+`**tool_choice` configuration (Task 2.3):** This lab uses the default `tool_choice: "auto"` — the model decides which tool to call. The exam also tests:
+
 - `tool_choice: "any"` — guarantees the model calls *some* tool (useful when you need structured output, not conversational text)
 - Forced selection `{"type": "tool", "name": "extract_metadata"}` — ensures a *specific* tool runs first (e.g., before enrichment steps)
 

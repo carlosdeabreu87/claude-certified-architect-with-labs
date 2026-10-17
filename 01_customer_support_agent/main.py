@@ -29,6 +29,49 @@ def load_system_prompt():
 # [Task 5.1] — extract verified facts from tool results so the model retains them
 # even when earlier conversation turns are summarized away
 
+CASE_FACT_FIELDS = [
+    "customer_id", "customer_name", "order_id",
+    "order_total", "refund_amount", "refund_status",
+]
+
+
+def extract_case_facts(tool_name, result, facts):
+    """Merge key transactional facts from a successful tool result into facts."""
+    is_error = isinstance(result, dict) and result.get("error")
+    if is_error:
+        return facts
+
+    if tool_name == "get_customer":
+        facts["customer_id"] = result.get("customer_id")
+        facts["customer_name"] = result.get("name")
+
+    if tool_name == "lookup_order":
+        facts["order_id"] = result.get("order_id")
+        facts["order_total"] = result.get("total")
+
+    if tool_name == "process_refund":
+        facts["order_id"] = result.get("order_id")
+        facts["refund_amount"] = result.get("amount")
+        facts["refund_status"] = result.get("status")
+
+    return facts
+
+
+def format_case_facts(facts):
+    """Format the collected facts dict into the string injected into the system prompt."""
+    if not facts:
+        default_message = "No facts collected yet."
+        return default_message
+
+    lines = []
+    for field in CASE_FACT_FIELDS:
+        if field in facts:
+            line = f"{field}: {facts[field]}"
+            lines.append(line)
+
+    formatted = "\n".join(lines)
+    return formatted
+
 
 # --- Prerequisite gate ---
 # [Task 1.4] — programmatic enforcement: block process_refund until get_customer has run
@@ -132,7 +175,8 @@ def run_agent(user_message):
     messages = [{"role": "user", "content": user_message}]
     tool_history = set()
     # [Task 5.1] — case_facts: verified transactional facts injected into system prompt
-    case_facts = "No facts collected yet."
+    case_facts_data = {}
+    case_facts = format_case_facts(case_facts_data)
 
     print(f"\n{CYAN}{BOLD}{'='*60}")
     print(f"Customer: {user_message}")
@@ -192,6 +236,11 @@ def run_agent(user_message):
                     result = execute_tool(block.name, block.input, tool_history)
                     print(f"  {DIM}Result:{RESET}")
                     console.print(JSON(json.dumps(result, indent=2)), style="dim")
+
+                    # [Task 5.1] — update case_facts after each successful tool result
+                    case_facts_data = extract_case_facts(block.name, result, case_facts_data)
+                    case_facts = format_case_facts(case_facts_data)
+                    print(f"  {DIM}case_facts updated: {case_facts}{RESET}")
 
                     tool_result_block = {
                         "type": "tool_result",
