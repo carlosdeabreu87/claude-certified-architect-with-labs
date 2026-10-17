@@ -65,6 +65,7 @@ def post_tool_use_hook(tool_name, tool_input, tool_result):
     Checks process_refund calls: if the refund amount exceeds MAX_REFUND_AMOUNT,
     replace the result with a structured error redirecting to escalation.
     """
+    
     # TODO: Check if tool_name is "process_refund" and if tool_input["amount"]
     # exceeds MAX_REFUND_AMOUNT. If it does, return a replacement result dict with:
     #   error: True
@@ -73,6 +74,16 @@ def post_tool_use_hook(tool_name, tool_input, tool_result):
     #   message: explaining the amount exceeds the $500 limit and must be escalated
     #   action: "escalate_to_human"
     # Otherwise return tool_result unchanged.
+    
+    if tool_name == "process_refund" and tool_input.get("amount", 0) > MAX_REFUND_AMOUNT:
+        result = {
+            "error": True,
+            "errorCategory": "policy_violation",
+            "isRetryable": False,
+            "message": f"Refund amount ${tool_input['amount']:.2f} exceeds the ${MAX_REFUND_AMOUNT} policy limit. This refund must be escalated to a human agent.",
+            "action": "escalate_to_human",
+        }
+        return result
     return tool_result
 
 
