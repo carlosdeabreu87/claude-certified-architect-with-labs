@@ -93,3 +93,17 @@ def format_receipt(order: dict) -> str:
     lines.append("=" * 40)
     result = "\n".join(lines)
     return result
+
+
+def get_low_stock_products(threshold=5):
+    """Return products with stock below the threshold."""
+    products = {
+        "PROD-001": {"name": "Wireless Headphones", "price": 79.99, "stock": 45},
+        "PROD-002": {"name": "USB-C Hub", "price": 49.99, "stock": 12},
+        "PROD-003": {"name": "Mechanical Keyboard", "price": 129.99, "stock": 0},
+    }
+    low_stock = {}
+    for pid, product in products.items():
+        if product["stock"] < threshold:
+            low_stock[pid] = product
+    return low_stock
