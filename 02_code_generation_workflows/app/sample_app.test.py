@@ -14,6 +14,14 @@ class TestGetProduct(unittest.TestCase):
         result = get_product("PROD-999")
         self.assertIsNone(result)
 
+    def test_empty_product_id(self):
+        result = get_product("")
+        self.assertEqual(result["message"], "product_id cannot be empty")
+
+    def test_invalid_product_id_format(self):
+        result = get_product("INVALID")
+        self.assertEqual(result["message"], "must match PROD-XXX format")
+
 
 class TestUpdateStock(unittest.TestCase):
     def test_add_stock(self):
@@ -27,6 +35,10 @@ class TestUpdateStock(unittest.TestCase):
     def test_negative_result(self):
         result = update_stock("PROD-003", -5)
         self.assertIsNone(result)
+
+    def test_non_integer_quantity(self):
+        result = update_stock("PROD-001", "abc")
+        self.assertEqual(result["message"], "quantity must be an integer")
 
 
 class TestCalculateOrderTotal(unittest.TestCase):
@@ -46,6 +58,10 @@ class TestCalculateOrderTotal(unittest.TestCase):
     def test_empty_order(self):
         result = calculate_order_total([])
         self.assertEqual(result["total"], 0)
+
+    def test_non_list_items(self):
+        result = calculate_order_total("not a list")
+        self.assertEqual(result["message"], "items must be a list")
 
 
 if __name__ == "__main__":
