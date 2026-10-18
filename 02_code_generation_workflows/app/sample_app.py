@@ -24,15 +24,21 @@ def update_stock(product_id, quantity):
     return product
 
 
-def calculate_order_total(items):
+def calculate_order_total(items: list[dict]) -> dict:
     """Calculate total for a list of order items."""
     total = 0
+    warnings = []
     for item in items:
-        product = get_product(item["product_id"])
+        product_id = item["product_id"]
+        product = get_product(product_id)
         if product:
             subtotal = product["price"] * item["quantity"]
             total += subtotal
-    result = {"total": round(total, 2), "item_count": len(items)}
+        else:
+            warning = f"Product not found: {product_id}"
+            warnings.append(warning)
+    rounded_total = round(total, 2)
+    result = {"total": rounded_total, "item_count": len(items), "warnings": warnings}
     return result
 
 
