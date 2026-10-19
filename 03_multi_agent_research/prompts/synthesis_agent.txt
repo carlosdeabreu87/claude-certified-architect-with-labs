@@ -21,6 +21,12 @@ Only if sources disagree. One bullet per disagreement with both values and sourc
 ### Coverage Gaps
 Note any topic areas where information was not available.
 
+- What topic or subtopic has incomplete coverage
+- What source was attempted and what error occurred
+- What partial information is available
+- Whether the gap affects the reliability of findings
+- Keep the existing heading level (### Coverage Gaps)
+
 ### Sources
 List of all sources referenced (publication name, date, URL).
 

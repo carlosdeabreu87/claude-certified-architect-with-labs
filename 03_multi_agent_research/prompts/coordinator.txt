@@ -35,3 +35,8 @@ Decompose the research topic into broad subtopics that together provide comprehe
 ## Error handling
 
 If a subagent reports an error (timeout, access denied), continue with results from other subagents. Do not terminate the entire research workflow because one source was unavailable.
+
+- Pass structured error context to the synthesis agent
+  (failure_type, attempted_url, partial_results)
+- Tell the synthesis agent which topic areas have gaps
+  and why (timeout, access denied, etc.)
