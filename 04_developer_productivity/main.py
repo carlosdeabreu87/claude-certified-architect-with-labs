@@ -169,18 +169,19 @@ async def run_query(user_query):
     scratchpad_instructions = ""                   # ← replace this
 
     # --- MCP tool guidance in system prompt ---
-    # TODO [Step 4, Task 2.1]: Add guidance so the agent knows when to use
-    # the MCP docs tool instead of Grep. Without this, the system prompt's
-    # "use Grep for content search" wording biases the agent toward Grep
-    # even when lookup_docs has a better description.
-    #
-    # mcp_tool_guidance = (
-    #     "- **lookup_docs** (MCP) — search project documentation: "
-    #     "architecture decisions, API specs, onboarding guides, tech debt. "
-    #     "Returns structured results with title, section, and content. "
-    #     "Use this for documentation questions; use Grep for source code.\n"
-    # )
-    mcp_tool_guidance = ""
+    from tools import lookup_docs
+    docs_server = create_sdk_mcp_server(
+        name="docs",
+        version="1.0.0",
+        tools=[lookup_docs],
+)
+
+    mcp_tool_guidance = (
+        "- **lookup_docs** (MCP) — search project documentation: "
+        "architecture decisions, API specs, onboarding guides, tech debt. "
+        "Returns structured results with title, section, and content. "
+        "Use this for documentation questions; use Grep for source code.\n"
+    )
 
     # --- Explore subagent guidance in system prompt ---
     # TODO [Step 5, Task 1.3]: Add guidance so the agent knows when to
@@ -229,7 +230,7 @@ async def run_query(user_query):
     # --- Tool list ---
     # [Task 2.5] — built-in tools for codebase exploration
     allowed_tools = ["Read", "Write", "Edit", "Grep", "Glob"]
-    # TODO [Step 4]: allowed_tools.append("mcp__docs__lookup_docs")
+    allowed_tools.append("mcp__docs__lookup_docs")
     # TODO [Step 5]: allowed_tools.append("Agent")
 
     hooks = {
@@ -251,7 +252,7 @@ async def run_query(user_query):
             options=ClaudeAgentOptions(
                 system_prompt=system_prompt,
                 allowed_tools=allowed_tools,
-                # TODO [Step 4]: mcp_servers={"docs": docs_server},
+                mcp_servers={"docs": docs_server},
                 # TODO [Step 5]: agents=agents,
                 permission_mode="bypassPermissions",
                 hooks=hooks,
