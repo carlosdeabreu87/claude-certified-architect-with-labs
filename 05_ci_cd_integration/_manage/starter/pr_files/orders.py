@@ -1,13 +1,24 @@
 # orders.py - Order processing module
 
 from datetime import datetime
+from auth import check_permission, validate_session
 
 ORDERS_DB = {}
 ORDER_COUNTER = {"next_id": 1000}
 
 
-def create_order(user_id, items, shipping_address):
+def create_order(user_id, items, shipping_address, token):
     """Create a new order for a user."""
+    has_permission = check_permission(token, "user")
+    if not has_permission:
+        result = {"error": "Not authorized"}
+        return result
+    session = validate_session(token)
+    is_self = session["user_id"] == user_id
+    is_manager = check_permission(token, "manager")
+    if not is_self and not is_manager:
+        result = {"error": "Not authorized to create order for this user"}
+        return result
     if not items:
         result = {"error": "Order must contain at least one item"}
         return result
@@ -32,16 +43,25 @@ def create_order(user_id, items, shipping_address):
     return order
 
 
-def get_order(order_id):
+def get_order(order_id, token):
     """Retrieve an order by ID."""
     if order_id not in ORDERS_DB:
         return None
-    return ORDERS_DB[order_id]
+    order = ORDERS_DB[order_id]
+    has_permission = check_permission(token, "user")
+    if not has_permission:
+        return None
+    session = validate_session(token)
+    is_owner = order["user_id"] == session["user_id"]
+    is_manager = check_permission(token, "manager")
+    if not is_owner and not is_manager:
+        return None
+    return order
 
 
-def cancel_order(order_id):
+def cancel_order(order_id, token):
     """Cancel an existing order."""
-    order = get_order(order_id)
+    order = get_order(order_id, token)
     if order is None:
         result = {"error": "Order not found"}
         return result
@@ -52,12 +72,20 @@ def cancel_order(order_id):
     return order
 
 
-def search_orders(query):
+def search_orders(query, token):
     """Search orders by user ID or order ID."""
+    has_permission = check_permission(token, "user")
+    if not has_permission:
+        result = {"error": "Not authorized"}
+        return result
+    session = validate_session(token)
+    is_manager = check_permission(token, "manager")
     filter_str = f"user_id LIKE '%{query}%' OR order_id LIKE '%{query}%'"
     results = []
     for oid, order in ORDERS_DB.items():
-        if query in order.get("user_id", "") or query in oid:
+        matches_query = query in order.get("user_id", "") or query in oid
+        is_owner = order["user_id"] == session["user_id"]
+        if matches_query and (is_manager or is_owner):
             results.append(order)
     return results
 

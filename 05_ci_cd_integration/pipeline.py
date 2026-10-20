@@ -329,44 +329,129 @@ def run_single_pass():
 
 def run_multi_pass():
     """Run per-file passes plus a cross-file integration pass."""
-    # TODO (Step 6): Implement multi-pass review
-    # Phase 1 — Per-file local passes:
-    #   Loop through each source file from get_source_files().
-    #   For each file, call load_single_file() to get its content,
-    #   then build_review_prompt() and run_claude_review().
-    #   Collect all findings from all per-file passes into a list.
-    #   Print which file is being reviewed for each pass.
-    #
-    # Phase 2 — Cross-file integration pass:
-    #   Load the integration prompt template with
-    #   load_integration_prompt(). Replace its template variables:
-    #   {per_file_findings} with the per-file findings as JSON,
-    #   {files_content} with all file contents from load_pr_files(),
-    #   {output_schema} with the schema from load_schema().
-    #   Run run_claude_review() with this integration prompt.
-    #
-    # Combine all findings (per-file + cross-file), save with
-    # save_review(), and display with display_review().
-    print(f"\n{YELLOW}TODO: Implement multi-pass review in "
-          f"Step 6.{RESET}\n")
+    print(f"\n{BOLD}Multi-Pass Review{RESET}\n")
+
+    previous = load_latest_review()
+    source_files = get_source_files()
+    all_findings = []
+
+    # Phase 1: Per-file local passes
+    total_passes = len(source_files) + 1
+    for i, filename in enumerate(source_files, 1):
+        print(f"{DIM}Pass {i}/{total_passes}: "
+              f"Reviewing {filename}...{RESET}")
+        file_content = load_single_file(filename)
+        prompt = build_review_prompt(file_content)
+        review = run_claude_review(prompt)
+        if review and review.get("findings"):
+            all_findings.extend(review["findings"])
+
+    # Phase 2: Cross-file integration pass
+    print(f"{DIM}Pass {total_passes}/{total_passes}: "
+          f"Cross-file integration...{RESET}")
+    files_content = load_pr_files()
+    findings_json = json.dumps(all_findings, indent=2)
+    schema = load_schema()
+    template = load_integration_prompt()
+    integration_prompt = template.replace(
+        "{per_file_findings}", findings_json
+    ).replace(
+        "{files_content}", files_content
+    ).replace(
+        "{output_schema}", schema
+    )
+    integration_review = run_claude_review(
+        integration_prompt
+    )
+    if integration_review:
+        cross_findings = integration_review.get(
+            "findings", []
+        )
+        all_findings.extend(cross_findings)
+
+    # Combine and display
+    combined = {
+        "findings": all_findings,
+        "summary": (
+            f"Multi-pass: {len(source_files)} per-file "
+            f"+ 1 integration, "
+            f"{len(all_findings)} total findings"
+        ),
+    }
+    save_review(combined)
+    display_review(combined)
+    compare_reviews(previous, combined)
 
 
 def run_independent_review():
-    """Run two independent review instances and compare findings."""
-    # TODO (Step 7): Implement independent review comparison
-    # 1. Run a first review: build prompt from load_pr_files() and
-    #    build_review_prompt(), then run_claude_review().
-    # 2. Run a second independent review with the same prompt.
-    #    Each claude -p call is a fresh session — no shared context.
-    # 3. Compare findings by file:line location. Print:
-    #    - How many findings both reviewers agree on
-    #    - How many only reviewer 1 found
-    #    - How many only reviewer 2 found
-    # 4. Print the unique findings from reviewer 2 — these show
-    #    the value of an independent review instance.
-    # 5. Save the combined findings with save_review().
-    print(f"\n{YELLOW}TODO: Implement independent review in "
-          f"Step 7.{RESET}\n")
+    """Run two independent review instances and compare."""
+    print(f"\n{BOLD}Independent Review Comparison{RESET}\n")
+
+    previous = load_latest_review()
+    files_content = load_pr_files()
+    prompt = build_review_prompt(files_content)
+
+    # Two independent reviews — each claude -p call
+    # is a fresh session with no shared context [Task 4.6]
+    print(f"{DIM}Running review instance 1...{RESET}")
+    review_1 = run_claude_review(prompt)
+    print(f"{DIM}Running review instance 2...{RESET}")
+    review_2 = run_claude_review(prompt)
+
+    if not review_1 or not review_2:
+        print(f"{RED}One or both reviews failed.{RESET}\n")
+        return
+
+    # Compare by file:line location
+    findings_1 = review_1.get("findings", [])
+    findings_2 = review_2.get("findings", [])
+    keys_1 = set(
+        f"{f.get('file', '')}:{f.get('line', '')}"
+        for f in findings_1
+    )
+    keys_2 = set(
+        f"{f.get('file', '')}:{f.get('line', '')}"
+        for f in findings_2
+    )
+
+    common = keys_1 & keys_2
+    only_1 = keys_1 - keys_2
+    only_2 = keys_2 - keys_1
+
+    print(f"\n{BOLD}Comparison:{RESET}")
+    print(f"  {GREEN}Both found:{RESET}      "
+          f"{len(common)} finding(s)")
+    print(f"  {YELLOW}Only reviewer 1:{RESET} "
+          f"{len(only_1)} finding(s)")
+    print(f"  {YELLOW}Only reviewer 2:{RESET} "
+          f"{len(only_2)} finding(s)")
+
+    if only_2:
+        print(f"\n{BOLD}Unique from reviewer 2:{RESET}")
+        for f in findings_2:
+            key = (f"{f.get('file', '')}:"
+                   f"{f.get('line', '')}")
+            if key in only_2:
+                print(f"  {f.get('file')}:{f.get('line')}"
+                      f" — {f.get('issue', '')}")
+    print()
+
+    # Combine: all from reviewer 1 + unique from 2
+    unique_from_2 = [
+        f for f in findings_2
+        if f"{f.get('file', '')}:{f.get('line', '')}"
+        in only_2
+    ]
+    all_findings = findings_1 + unique_from_2
+    combined = {
+        "findings": all_findings,
+        "summary": (
+            f"Independent review: "
+            f"{len(all_findings)} combined findings"
+        ),
+    }
+    save_review(combined)
+    compare_reviews(previous, combined)
 
 
 def format_as_pr_comments():

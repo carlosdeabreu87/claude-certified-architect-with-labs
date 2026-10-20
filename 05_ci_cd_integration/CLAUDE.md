@@ -4,7 +4,7 @@
 
 - **No inline return structures** — assign to a variable first, then return it.
 - **No function calls as arguments** — assign the result first, then pass it.
-- **Constants in `config.py`** — console colors.
+- **Constants in** `config.py` — console colors.
 - **File headers** — every Python file starts with `# filename.py - Short description`.
 - Functions over classes.
 - Comments only where they clarify an exam concept.
@@ -33,10 +33,25 @@
 ### Review criteria
 
 When reviewing code, focus on:
+
 - Logic errors and edge cases
 - Security vulnerabilities (injection, credential exposure, missing auth)
 - Missing error handling for boundary conditions
 
 Do not flag:
+
 - Minor style preferences that do not affect correctness
 - Missing type hints unless they mask a bug
+
+### Existing test coverage
+
+The following test files already exist. When generating
+new tests, do NOT suggest tests for scenarios already
+covered:
+
+- `pr_files/test_utils.py` covers:
+  - `validate_email`: valid format, missing @, missing
+    domain, empty string
+  - `format_currency`: positive amount, zero, None
+  - `truncate_string`: short string, long string, empty
+    string, exact length
